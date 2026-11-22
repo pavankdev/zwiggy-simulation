@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#fc8019" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Zwiggy - Real-Time Food Delivery & Logistics Simulation</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#fc8019', // Swiggy Orange
+              red: '#e23744',    // Zomato Red
+              dark: '#1e293b',
+              accent: '#ff5200'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 font-['Plus_Jakarta_Sans'] min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white overscroll-none">
+
+  <!-- Top Global Header -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 shadow-sm transition-all">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-orange-600 via-orange-500 to-amber-400 flex items-center justify-center text-white shadow-md shadow-orange-500/20 text-base sm:text-xl">
+          🛵
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <span class="font-extrabold text-base sm:text-xl tracking-tight text-slate-900">Zwiggy<span class="text-orange-500">.io</span></span>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 tracking-wider uppercase">Live</span>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 hidden sm:block">Real-time Food Delivery & Dispatch Platform</p>
+        </div>
+      </div>
+
+      <!-- Simulation Quick Cockpit Controls -->
+      <div class="flex items-center gap-1.5 sm:gap-3 overflow-x-auto py-1">
+        <!-- Weather Badge -->
+        <div id="weather-badge" class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full bg-slate-100 text-[11px] sm:text-xs font-semibold text-slate-700 border border-slate-200 shrink-0">
+          <span id="weather-icon">☀️</span>
+          <span id="weather-text" class="hidden xs:inline">Clear</span>
+        </div>
+
+        <!-- Speed Selector -->
+        <div class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-[11px] sm:text-xs font-medium shrink-0">
+          <button onclick="setSimulationSpeed(1)" class="speed-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded bg-white font-bold text-orange-600 shadow-sm" data-speed="1">1x</button>
+          <button onclick="setSimulationSpeed(2)" class="speed-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900" data-speed="2">2x</button>
+          <button onclick="setSimulationSpeed(5)" class="speed-btn px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-slate-600 hover:text-slate-900" data-speed="5">5x</button>
+        </div>
+
+        <!-- Auto Order Trigger -->
+        <button onclick="triggerAutoOrder()" class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-[11px] sm:text-xs font-bold shadow-sm transition shrink-0">
+          <span>⚡</span>
+          <span class="hidden sm:inline">Test Order</span>
+        </button>
+
+        <!-- Sound Toggle -->
+        <button id="sound-toggle-btn" onclick="toggleSound()" class="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition shrink-0" title="Toggle Sound Chimes">
+          <span id="sound-icon" class="text-sm sm:text-base">🔊</span>
+        </button>
+      </div>
+
+      <!-- Desktop Navigation Tabs -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 text-xs font-bold shrink-0">
+        <button onclick="switchTab('customer')" id="tab-btn-customer" class="tab-btn active px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5">
+          <span>🍔</span> Customer App
+        </button>
+        <button onclick="switchTab('restaurant')" id="tab-btn-restaurant" class="tab-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+          <span>👨‍🍳</span> Restaurant KOT
+        </button>
+        <button onclick="switchTab('rider')" id="tab-btn-rider" class="tab-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+          <span>🛵</span> Rider Fleet
+        </button>
+        <button onclick="switchTab('ops')" id="tab-btn-ops" class="tab-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
+          <span>🛰️</span> Operations & Map
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Live KPI Bar (Mobile Optimized Scrollable / Grid) -->
+  <div class="bg-white border-b border-slate-200 py-2 px-3 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto text-[11px] sm:text-xs font-medium no-scrollbar">
+      <div class="flex items-center gap-3 sm:gap-6 shrink-0">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-slate-500">Orders:</span>
+          <span id="kpi-active-orders" class="font-bold text-slate-900">0</span>
+        </div>
+        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-2.5 sm:pl-4">
+          <span class="text-slate-500">Delivered:</span>
+          <span id="kpi-delivered-orders" class="font-bold text-emerald-600">0</span>
+        </div>
+        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-2.5 sm:pl-4">
+          <span class="text-slate-500">Fleet:</span>
+          <span id="kpi-fleet-busy" class="font-bold text-slate-900">0/5</span>
+        </div>
+        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-2.5 sm:pl-4">
+          <span class="text-slate-500">Revenue:</span>
+          <span id="kpi-total-revenue" class="font-bold text-slate-900">₹0</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 text-slate-500 text-[10px] sm:text-[11px] shrink-0 pl-2">
+        <span id="connection-status" class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> SSE Live
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN VIEW CONTAINER (Added pb-24 on mobile for bottom navigation bar clearance) -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8">
+
+    <!-- TAB 1: CUSTOMER APP VIEW -->
+    <section id="view-customer" class="space-y-4 sm:space-y-6">
+      
+      <!-- Customer App Banner -->
+      <div class="bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white shadow-lg shadow-orange-500/10 relative overflow-hidden">
+        <div class="relative z-10 max-w-2xl space-y-1.5 sm:space-y-3">
+          <span class="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] sm:text-xs font-bold uppercase tracking-wider">Fastest Delivery in 25 Mins</span>
+          <h1 class="text-xl sm:text-4xl font-extrabold tracking-tight leading-snug">Cravings delivered in minutes.</h1>
+          <p class="text-white/85 text-xs sm:text-base">Order from Bengaluru's iconic kitchens with live GPS rider tracking.</p>
+        </div>
+        <div class="absolute right-3 bottom-1 text-6xl sm:text-8xl opacity-20 select-none pointer-events-none">
+          🍕
+        </div>
+      </div>
+
+      <!-- Filters & Categories Bar (Touch Scrollable on Mobile) -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5" id="cuisine-filters">
+          <button onclick="filterCuisine('ALL')" class="cuisine-btn active px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold transition shadow-sm shrink-0" data-cuisine="ALL">All</button>
+          <button onclick="filterCuisine('Biryani')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="Biryani">🍗 Biryani</button>
+          <button onclick="filterCuisine('Burgers')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="Burgers">🍔 Burgers</button>
+          <button onclick="filterCuisine('Pizza')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="Pizza">🍕 Pizza</button>
+          <button onclick="filterCuisine('North Indian')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="North Indian">🍛 North Indian</button>
+          <button onclick="filterCuisine('Desserts')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="Desserts">🍨 Desserts</button>
+          <button onclick="filterCuisine('South Indian')" class="cuisine-btn px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition shrink-0" data-cuisine="South Indian">🥞 South Indian</button>
+        </div>
+
+        <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <span class="text-xs text-slate-500 sm:hidden" id="restaurants-count-mobile">6 outlets</span>
+          <!-- Pure Veg Toggle -->
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <input type="checkbox" id="veg-only-filter" onchange="renderRestaurants()" class="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4">
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm border border-emerald-600 flex items-center justify-center p-0.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span></span> Pure Veg</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Active Ongoing Order Tracker Banner -->
+      <div id="customer-active-order-banner" class="hidden">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Restaurant Cards Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Featured Restaurants in Bengaluru</h2>
+          <span class="text-xs text-slate-500 hidden sm:inline" id="restaurants-count">Loading restaurants...</span>
+        </div>
+        <div id="restaurants-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <!-- Cards rendered by JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: RESTAURANT PARTNER DASHBOARD (KOT) -->
+    <section id="view-restaurant" class="hidden space-y-4 sm:space-y-6">
+      
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Merchant Portal</span>
+            <span class="text-xs text-emerald-600 font-bold">● Kitchen Live</span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">Restaurant Partner & Kitchen Dashboard</h2>
+          <p class="text-xs text-slate-500">Manage incoming orders, advance kitchen cooking, and monitor outlet tickets.</p>
+        </div>
+        
+        <!-- Restaurant Switcher -->
+        <div class="w-full sm:w-auto flex items-center gap-2">
+          <label for="restaurant-selector" class="text-xs font-bold text-slate-600 shrink-0">Outlet:</label>
+          <select id="restaurant-selector" onchange="renderRestaurantDashboard()" class="w-full sm:w-auto text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+      </div>
+
+      <!-- Restaurant Quick Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4" id="restaurant-outlet-stats">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Mobile Lane Tabs for small screens -->
+      <div class="md:hidden flex bg-slate-100 p-1 rounded-xl gap-1 text-xs font-bold">
+        <button onclick="switchKOTMobileTab('INCOMING')" id="kot-m-tab-INCOMING" class="kot-m-tab flex-1 py-1.5 rounded-lg text-center bg-white text-orange-600 shadow-sm">
+          Incoming (<span id="kot-count-incoming-m">0</span>)
+        </button>
+        <button onclick="switchKOTMobileTab('PREPARING')" id="kot-m-tab-PREPARING" class="kot-m-tab flex-1 py-1.5 rounded-lg text-center text-slate-600">
+          Cooking (<span id="kot-count-preparing-m">0</span>)
+        </button>
+        <button onclick="switchKOTMobileTab('READY')" id="kot-m-tab-READY" class="kot-m-tab flex-1 py-1.5 rounded-lg text-center text-slate-600">
+          Ready (<span id="kot-count-ready-m">0</span>)
+        </button>
+      </div>
+
+      <!-- Kitchen Order Tickets (KOT) Columns -->
+      <div>
+        <h3 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Kitchen Order Tickets (KOT)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          
+          <!-- Column 1: Incoming / New Orders -->
+          <div id="kot-col-incoming" class="bg-slate-100/80 rounded-2xl p-3 sm:p-4 border border-slate-200">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-lg">New Incoming</span>
+              <span id="kot-count-incoming" class="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
+            </div>
+            <div id="kot-list-incoming" class="space-y-3 min-h-[140px]">
+              <!-- Tickets -->
+            </div>
+          </div>
+
+          <!-- Column 2: In Kitchen / Cooking -->
+          <div id="kot-col-preparing" class="bg-slate-100/80 rounded-2xl p-3 sm:p-4 border border-slate-200 max-md:hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-lg">Kitchen Cooking</span>
+              <span id="kot-count-preparing" class="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
+            </div>
+            <div id="kot-list-preparing" class="space-y-3 min-h-[140px]">
+              <!-- Tickets -->
+            </div>
+          </div>
+
+          <!-- Column 3: Ready for Pickup / Dispatched -->
+          <div id="kot-col-ready" class="bg-slate-100/80 rounded-2xl p-3 sm:p-4 border border-slate-200 max-md:hidden">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">Ready / Out for Delivery</span>
+              <span id="kot-count-ready" class="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
+            </div>
+            <div id="kot-list-ready" class="space-y-3 min-h-[140px]">
+              <!-- Tickets -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: RIDER FLEET DASHBOARD -->
+    <section id="view-rider" class="hidden space-y-4 sm:space-y-6">
+      
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Fleet Logistics</span>
+          <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">Delivery Partner (Rider) Management</h2>
+          <p class="text-xs text-slate-500">Monitor rider telemetry, active trip status, EV battery level, and simulate partner app actions.</p>
+        </div>
+        <div class="w-full sm:w-auto flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-600 shrink-0">Partner:</span>
+          <select id="rider-selector" onchange="renderRiderDashboard()" class="w-full sm:w-auto text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        
+        <!-- Mobile Phone Mockup / Native Driver Console on Phone -->
+        <div class="flex justify-center">
+          <div class="w-full max-w-sm bg-slate-900 rounded-3xl sm:rounded-[3rem] p-3.5 sm:p-4 shadow-2xl border-2 sm:border-4 border-slate-800 relative text-white">
+            <!-- Phone Notch (Desktop only) -->
+            <div class="w-28 sm:w-32 h-3.5 sm:h-4 bg-slate-800 rounded-full mx-auto mb-2.5 sm:mb-3 hidden sm:block"></div>
+
+            <!-- Rider App Header -->
+            <div class="bg-slate-800/90 rounded-2xl p-3 sm:p-3.5 mb-3 flex items-center justify-between">
+              <div class="flex items-center gap-2 sm:gap-2.5">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white text-xs sm:text-sm" id="phone-rider-avatar">
+                  RK
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold" id="phone-rider-name">Ravi Kumar</h4>
+                  <p class="text-[10px] text-slate-400" id="phone-rider-vehicle">Hero Splendor</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-bold text-emerald-400" id="phone-rider-earnings">₹340</span>
+                <p class="text-[10px] text-slate-400">Today's Payout</p>
+              </div>
+            </div>
+
+            <!-- Active Trip Card / Idle Status -->
+            <div id="phone-trip-content" class="min-h-[320px] sm:min-h-[380px] bg-slate-800/40 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-slate-700/50">
+              <!-- Dynamically rendered -->
+            </div>
+
+            <!-- Home indicator (Desktop only) -->
+            <div class="w-20 sm:w-24 h-1 bg-slate-700 rounded-full mx-auto mt-3 hidden sm:block"></div>
+          </div>
+        </div>
+
+        <!-- Fleet Roster (Responsive Cards on Mobile / Table on Desktop) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider">All Delivery Partners (Telemetry)</h3>
+            <span class="text-[10px] sm:text-xs text-slate-500">Autonomous GPS Active</span>
+          </div>
+
+          <!-- Desktop Table -->
+          <div class="hidden sm:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3 font-semibold">Partner</th>
+                  <th class="py-2.5 px-3 font-semibold">Vehicle</th>
+                  <th class="py-2.5 px-3 font-semibold">Status</th>
+                  <th class="py-2.5 px-3 font-semibold">Current Task</th>
+                  <th class="py-2.5 px-3 font-semibold">Battery / Fuel</th>
+                  <th class="py-2.5 px-3 font-semibold">Trips & Earnings</th>
+                </tr>
+              </thead>
+              <tbody id="fleet-table-body" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Rows dynamically injected -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards View for Fleet -->
+          <div id="fleet-mobile-cards" class="sm:hidden space-y-2.5">
+            <!-- Injected by JS on mobile -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 4: OPERATIONS & LIVE MAP VIEW -->
+    <section id="view-ops" class="hidden space-y-4 sm:space-y-6">
+      
+      <!-- Operations Toolbar & Simulation Tuning -->
+      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3 sm:space-y-4">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">Control Center</span>
+              <span class="text-xs text-emerald-600 font-bold">● Dispatch: Nearest Neighbor</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">Live City Grid & Logistics Simulation</h2>
+            <p class="text-xs text-slate-500">Real-time GPS coordinates, vehicle movement vectors, weather surcharges, and dispatch telemetry.</p>
+          </div>
+
+          <!-- Controls: Weather, Traffic, Chaos -->
+          <div class="w-full sm:w-auto flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- Weather Selector -->
+            <div class="flex items-center gap-1.5 text-xs flex-1 sm:flex-initial">
+              <span class="font-bold text-slate-600 text-[11px]">Weather:</span>
+              <select id="sim-weather-select" onchange="updateSimConfig('weather', this.value)" class="w-full sm:w-auto bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-slate-800 font-semibold focus:outline-none text-xs">
+                <option value="CLEAR">☀️ Clear</option>
+                <option value="RAIN">🌧️ Rain (+Surge)</option>
+                <option value="STORM">⛈️ Storm</option>
+              </select>
+            </div>
+
+            <!-- Traffic Selector -->
+            <div class="flex items-center gap-1.5 text-xs flex-1 sm:flex-initial">
+              <span class="font-bold text-slate-600 text-[11px]">Traffic:</span>
+              <select id="sim-traffic-select" onchange="updateSimConfig('traffic', this.value)" class="w-full sm:w-auto bg-slate-50 border border-slate-300 rounded-lg px-2 py-1 text-slate-800 font-semibold focus:outline-none text-xs">
+                <option value="LIGHT">🟢 Light</option>
+                <option value="MODERATE" selected>🟡 Normal</option>
+                <option value="HEAVY">🔴 Heavy</option>
+              </select>
+            </div>
+
+            <!-- Auto-Order Toggle -->
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+              <input type="checkbox" id="sim-auto-order-checkbox" onchange="updateSimConfig('autoOrderEnabled', this.checked)" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4">
+              <span>Auto-Orders</span>
+            </label>
+
+            <!-- Reset Button -->
+            <button onclick="resetSimulation()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+              🔄 Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP + TELEMETRY ROW -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        
+        <!-- Live City Vector Canvas Map (Span 2) -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-2xl p-3 sm:p-4 shadow-md border border-slate-800 flex flex-col relative overflow-hidden">
+          <div class="flex items-center justify-between text-white text-[11px] sm:text-xs mb-2.5 sm:mb-3 z-10">
+            <div class="flex items-center gap-1.5">
+              <span class="font-bold">Bengaluru Metro Grid</span>
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[9px] text-slate-300 font-mono hidden xs:inline">12.9352° N</span>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px]">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500 inline-block"></span> Rest</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span> User</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Rider</span>
+            </div>
+          </div>
+
+          <!-- Canvas Map -->
+          <div class="relative w-full h-[320px] sm:h-[460px] rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+            <canvas id="city-map-canvas" class="w-full h-full block cursor-crosshair touch-none"></canvas>
+            
+            <!-- Live Map Overlay Info -->
+            <div class="absolute bottom-2 left-2 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-700/80 text-[10px] text-slate-300 pointer-events-none">
+              <span>📍 Live GPS Autonomous Movement</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Simulation Event Stream / Terminal (Span 1) -->
+        <div class="bg-slate-900 rounded-2xl p-3 sm:p-4 shadow-md border border-slate-800 flex flex-col">
+          <div class="flex items-center justify-between text-white text-xs mb-2 sm:mb-3 pb-2 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span class="font-bold">Real-time Event Stream</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono">SSE Stream</span>
+          </div>
+
+          <div id="events-terminal" class="flex-1 overflow-y-auto space-y-1.5 text-[11px] font-mono text-slate-300 pr-1 max-h-[300px] sm:max-h-[440px]">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MOBILE BOTTOM NAVIGATION BAR (Native App Feel on Smartphones) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 shadow-lg px-2 py-1.5 flex items-center justify-around text-[10px] font-bold">
+    <button onclick="switchTab('customer')" id="mob-nav-customer" class="mob-nav-btn active flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-orange-600 transition">
+      <span class="text-lg">🍔</span>
+      <span>Food</span>
+    </button>
+    <button onclick="switchTab('restaurant')" id="mob-nav-restaurant" class="mob-nav-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-500 transition">
+      <span class="text-lg">👨‍🍳</span>
+      <span>Kitchen</span>
+    </button>
+    <button onclick="switchTab('rider')" id="mob-nav-rider" class="mob-nav-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-500 transition">
+      <span class="text-lg">🛵</span>
+      <span>Rider</span>
+    </button>
+    <button onclick="switchTab('ops')" id="mob-nav-ops" class="mob-nav-btn flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-500 transition">
+      <span class="text-lg">🛰️</span>
+      <span>Live Map</span>
+    </button>
+    <button onclick="openCartDrawer()" class="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-slate-700 relative transition">
+      <span class="text-lg">🛍️</span>
+      <span>Cart</span>
+      <span id="mob-nav-cart-badge" class="hidden absolute top-0.5 right-2 w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] font-black flex items-center justify-center">0</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: RESTAURANT MENU MODAL (Bottom Sheet on Mobile, Centered Modal on Desktop) -->
+  <div id="menu-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-2xl w-full max-h-[88vh] sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      
+      <!-- Mobile Drag Handle -->
+      <div class="sm:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0"></div>
+
+      <!-- Modal Header -->
+      <div class="relative h-36 sm:h-44 bg-slate-800 flex items-end p-4 sm:p-6 text-white shrink-0" id="modal-banner">
+        <div class="absolute inset-0 bg-cover bg-center opacity-60" id="modal-banner-img"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent"></div>
+        
+        <button onclick="closeMenuModal()" class="absolute top-3 right-3 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md flex items-center justify-center text-white text-xs sm:text-sm font-bold transition">
+          ✕
+        </button>
+
+        <div class="relative z-10">
+          <span class="px-2 py-0.5 rounded-full bg-orange-500 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider" id="modal-cuisine">Biryani</span>
+          <h3 class="text-xl sm:text-2xl font-extrabold mt-1 leading-tight" id="modal-restaurant-name">Meghana Foods</h3>
+          <p class="text-[11px] sm:text-xs text-slate-300" id="modal-restaurant-address">5th Block, Koramangala</p>
+        </div>
+      </div>
+
+      <!-- Menu Items List -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3 sm:space-y-4" id="modal-menu-list">
+        <!-- Menu cards -->
+      </div>
+
+      <!-- Modal Footer (View Cart Button) -->
+      <div class="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+        <div class="text-xs">
+          <span class="text-slate-500">In Cart:</span>
+          <strong class="text-slate-900 text-sm ml-1" id="modal-cart-count">0 items</strong>
+        </div>
+        <button onclick="openCartDrawer()" class="px-4 sm:px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-xs font-bold shadow-md shadow-orange-500/20 transition flex items-center gap-1.5 sm:gap-2">
+          <span>View Cart & Checkout</span>
+          <span>→</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SLIDE-OVER DRAWER: SHOPPING CART & CHECKOUT (Bottom sheet on mobile / slide-over on desktop) -->
+  <div id="cart-drawer-overlay" onclick="closeCartDrawer()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden transition-opacity"></div>
+  <div id="cart-drawer" class="fixed bottom-0 md:top-0 right-0 h-[92vh] md:h-full w-full max-w-md bg-white rounded-t-3xl md:rounded-none shadow-2xl z-50 translate-y-full md:translate-y-0 md:translate-x-full transition-transform duration-300 flex flex-col">
+    
+    <!-- Mobile Drag Handle -->
+    <div class="md:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto my-2 shrink-0"></div>
+
+    <!-- Cart Header -->
+    <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🛍️</span>
+        <h3 class="font-extrabold text-base text-slate-900">Your Food Cart</h3>
+      </div>
+      <button onclick="closeCartDrawer()" class="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 flex items-center justify-center text-slate-700 text-sm font-bold">
+        ✕
+      </button>
+    </div>
+
+    <!-- Cart Items Container -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 sm:space-y-4" id="cart-items-container">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- Coupons & Bill Breakup Footer -->
+    <div class="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 space-y-2.5 sm:space-y-3 shrink-0" id="cart-checkout-section">
+      <!-- Coupon Code Input -->
+      <div class="flex items-center gap-2">
+        <input type="text" id="coupon-input" placeholder="Coupon (e.g. SWIGGY50)" class="flex-1 uppercase text-xs font-bold px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-none" />
+        <button onclick="applyCoupon()" class="px-3 sm:px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shrink-0">Apply</button>
+      </div>
+      <div id="coupon-message" class="text-[11px] font-semibold text-emerald-600 hidden"></div>
+
+      <!-- Bill Breakdown -->
+      <div class="space-y-1 text-xs text-slate-600 pt-1.5 border-t border-slate-200">
+        <div class="flex justify-between">
+          <span>Item Total</span>
+          <span id="bill-item-total" class="font-medium text-slate-800">₹0</span>
+        </div>
+        <div class="flex justify-between text-emerald-600 hidden" id="bill-discount-row">
+          <span>Coupon Discount</span>
+          <span id="bill-discount" class="font-medium">-₹0</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="flex items-center gap-1">Delivery Fee <span id="bill-surge-tag" class="hidden text-[10px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-bold">Surge</span></span>
+          <span id="bill-delivery-fee" class="font-medium text-slate-800">₹35</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Platform Fee</span>
+          <span class="font-medium text-slate-800">₹6</span>
+        </div>
+        <div class="flex justify-between">
+          <span>GST (5%)</span>
+          <span id="bill-gst" class="font-medium text-slate-800">₹0</span>
+        </div>
+        <div class="flex justify-between font-extrabold text-sm text-slate-900 pt-1.5 border-t border-slate-200">
+          <span>To Pay</span>
+          <span id="bill-grand-total" class="text-orange-600 text-base">₹0</span>
+        </div>
+      </div>
+
+      <!-- Delivery Address Select -->
+      <div class="pt-1">
+        <label class="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Deliver To:</label>
+        <select id="checkout-customer-select" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800 truncate">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Checkout Button -->
+      <button onclick="placeOrder()" id="btn-place-order" class="w-full py-3 sm:py-3.5 rounded-xl bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-orange-500/25 transition flex items-center justify-center gap-2">
+        <span>Place Order Now</span>
+        <span>⚡</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- FLOATING CART BUTTON (Adjusted position on mobile to be above bottom nav) -->
+  <div id="floating-cart-btn" onclick="openCartDrawer()" class="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-30 hidden animate-bounce">
+    <button class="bg-orange-500 hover:bg-orange-600 text-white font-extrabold px-4 sm:px-5 py-2.5 sm:py-3 rounded-full shadow-2xl flex items-center gap-2.5 sm:gap-3 border-2 border-white">
+      <span class="text-base sm:text-lg">🛒</span>
+      <span id="floating-cart-badge" class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+      <span class="text-xs" id="floating-cart-total">₹0</span>
+    </button>
+  </div>
+
+  <!-- Frontend Logic -->
+  <script src="/app.js"></script>
+</body>
+</html>
